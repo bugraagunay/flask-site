@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('app.js loaded and DOMContentLoaded fired.');
+
     const countrySelect = document.getElementById('country');
     const datasetSelect = document.getElementById('dataset');
-    const yearSelect = document.getElementById('year'); // Corrected ID from yearInput to yearSelect
+    const yearSelect = document.getElementById('year');
     const filterForm = document.getElementById('filter-form');
     const tableBody = document.getElementById('table-body');
     const errorContainer = document.getElementById('error-container');
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (param) {
                 url += `?country=${param}`;
             }
+            console.log(`Fetching from: ${url}`); // Log the URL being fetched
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
