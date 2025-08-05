@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorContainer = document.getElementById('error-container');
 
     // Fetch countries and populate dropdown
-    fetch('http://127.0.0.1:5000/countries')
+    fetch('/countries')
         .then(response => response.json())
         .then(countries => {
             countries.forEach(country => {
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     // Fetch datasets and populate dropdown
-    fetch('http://127.0.0.1:5000/datasets')
+    fetch('/datasets')
         .then(response => response.json())
         .then(datasets => {
             datasets.forEach(dataset => {
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch years based on country selection
     countrySelect.addEventListener('change', () => {
         const selectedCountry = countrySelect.value;
-        fetch(`http://127.0.0.1:5000/years?country=${selectedCountry}`)
+        fetch(`/years?country=${selectedCountry}`)
             .then(response => response.json())
             .then(years => {
                 yearSelect.innerHTML = '';
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataset = datasetSelect.value;
         const year = yearSelect.value;
 
-        let url = `http://127.0.0.1:5000/data?`;
+        let url = `/data?`;
         if (country) url += `country=${country}&`;
         if (year) url += `year=${year}&`;
         if (dataset) url += `dataset=${dataset}`;
