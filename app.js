@@ -8,8 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch countries and populate dropdown
     fetch('/countries')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(countries => {
+            if (countries.length === 0) {
+                console.warn('Received empty countries list from API.');
+            }
             countries.forEach(country => {
                 const option = document.createElement('option');
                 option.value = country;
@@ -18,33 +26,68 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             // Trigger change event to populate years for the first country
             countrySelect.dispatchEvent(new Event('change'));
+        })
+        .catch(error => {
+            console.error('Error fetching countries:', error);
+            errorContainer.textContent = 'Failed to load countries. Please check console for details.';
+            errorContainer.style.display = 'block';
         });
 
     // Fetch datasets and populate dropdown
     fetch('/datasets')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(datasets => {
+            if (datasets.length === 0) {
+                console.warn('Received empty datasets list from API.');
+            }
             datasets.forEach(dataset => {
                 const option = document.createElement('option');
                 option.value = dataset;
                 option.textContent = dataset;
                 datasetSelect.appendChild(option);
             });
+        })
+        .catch(error => {
+            console.error('Error fetching datasets:', error);
+            errorContainer.textContent = 'Failed to load datasets. Please check console for details.';
+            errorContainer.style.display = 'block';
         });
 
     // Fetch years based on country selection
     countrySelect.addEventListener('change', () => {
         const selectedCountry = countrySelect.value;
+        if (!selectedCountry) {
+            yearSelect.innerHTML = ''; // Clear years if no country is selected
+            return;
+        }
         fetch(`/years?country=${selectedCountry}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(years => {
                 yearSelect.innerHTML = '';
+                if (years.length === 0) {
+                    console.warn(`Received empty years list for ${selectedCountry} from API.`);
+                }
                 years.forEach(year => {
                     const option = document.createElement('option');
                     option.value = year;
                     option.textContent = year;
                     yearSelect.appendChild(option);
                 });
+            })
+            .catch(error => {
+                console.error(`Error fetching years for ${selectedCountry}:`, error);
+                errorContainer.textContent = `Failed to load years for ${selectedCountry}. Please check console for details.`;
+                errorContainer.style.display = 'block';
             });
     });
 
@@ -60,7 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dataset) url += `dataset=${dataset}`;
 
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 tableBody.innerHTML = '';
                 if (data.length === 0) {
