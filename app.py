@@ -15,7 +15,7 @@ DATABASE = os.path.join(os.path.dirname(__file__), 'income.db')
 def get_db_connection():
     conn = None
     try:
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect(DATABASE, check_same_thread=False)
         conn.row_factory = sqlite3.Row
     except sqlite3.Error as e:
         logging.error(f"Database connection error: {e}")
