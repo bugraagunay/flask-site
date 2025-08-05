@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import pandas as pd
 import logging
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,10 @@ def get_dataset_map():
     # Dynamically create the map from the column names, stripping whitespace
     dataset_map = {col.strip(): col.strip() for col in table_info['name']}
     return dataset_map
+
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/countries')
 def get_countries():
@@ -95,4 +100,5 @@ def get_data():
     return jsonify(results)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
