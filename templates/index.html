@@ -11,16 +11,16 @@
         <h1>World Bank Data Visualizer</h1>
         <form id="filter-form" class="row g-3">
             <div class="col-md-4">
-                <label for="country" class="form-label">Country</label>
-                <select id="country" class="form-select" multiple></select>
+                <label for="country-list" class="form-label">Country</label>
+                <div id="country-list" class="form-control" style="height: 260px; overflow-y: auto;"></div>
             </div>
             <div class="col-md-4">
                 <label for="dataset" class="form-label">Data Set</label>
                 <select id="dataset" class="form-select"></select>
             </div>
             <div class="col-md-2">
-                <label for="year" class="form-label">Year</label>
-                <select id="year" class="form-select" multiple></select>
+                <label for="year-list" class="form-label">Year</label>
+                <div id="year-list" class="form-control" style="height: 260px; overflow-y: auto;"></div>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Fetch Data</button>
@@ -43,6 +43,6 @@
         </div>
         <div id="error-container" class="alert alert-danger mt-3" style="display: none;"></div>
     </div>
-    <script src="/static/app.js"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

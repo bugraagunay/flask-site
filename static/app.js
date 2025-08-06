@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const countrySelect = document.getElementById('country');
+    const countryList = document.getElementById('country-list');
     const datasetSelect = document.getElementById('dataset');
-    const yearSelect = document.getElementById('year');
+    const yearList = document.getElementById('year-list');
     const filterForm = document.getElementById('filter-form');
     const tableBody = document.getElementById('table-body');
     const errorContainer = document.getElementById('error-container');
@@ -10,12 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/filters')
         .then(response => response.json())
         .then(data => {
-            // Populate country dropdown
+            // Populate country checkbox list
             data.countries.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country;
-                option.textContent = country;
-                countrySelect.appendChild(option);
+                const item = document.createElement('div');
+                item.className = 'form-check';
+                item.innerHTML = `<input class="form-check-input" type="checkbox" value="${country}" id="country-${country}">
+                                  <label class="form-check-label" for="country-${country}">${country}</label>`;
+                countryList.appendChild(item);
             });
 
             // Populate dataset dropdown
@@ -26,12 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasetSelect.appendChild(option);
             });
 
-            // Populate year dropdown
+            // Populate year checkbox list
             data.years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
+                const item = document.createElement('div');
+                item.className = 'form-check';
+                item.innerHTML = `<input class="form-check-input" type="checkbox" value="${year}" id="year-${year}">
+                                  <label class="form-check-label" for="year-${year}">${year}</label>`;
+                yearList.appendChild(item);
             });
         })
         .catch(error => {
@@ -44,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     filterForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const selectedCountries = Array.from(countrySelect.selectedOptions).map(option => option.value);
-        const selectedYears = Array.from(yearSelect.selectedOptions).map(option => option.value);
+        const selectedCountries = Array.from(countryList.querySelectorAll('input:checked')).map(input => input.value);
+        const selectedYears = Array.from(yearList.querySelectorAll('input:checked')).map(input => input.value);
         const selectedDataset = datasetSelect.value;
 
         const params = new URLSearchParams();
