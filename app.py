@@ -50,16 +50,28 @@ def get_filters():
 @app.route('/data')
 def get_data():
     """Provides the main data for the table based on user selections."""
-    country = request.args.get('country')
-    year = request.args.get('year')
+    countries = request.args.getlist('country')
+    years = request.args.getlist('year')
     dataset = request.args.get('dataset')
 
     conn = get_db_connection()
     
-    # Base query
-    query = "SELECT * FROM income_data WHERE Country = ? AND Year = ?"
-    params = [country, year]
-    
+    # Build the query dynamically
+    query = "SELECT * FROM income_data WHERE "
+    filters = []
+    params = []
+
+    if countries:
+        filters.append(f"Country IN ({', '.join('?' * len(countries))})")
+        params.extend(countries)
+
+    if years:
+        filters.append(f"Year IN ({', '.join('?' * len(years))})")
+        params.extend(years)
+
+    query += " AND ".join(filters)
+    query += " ORDER BY Country, Year"
+
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
 

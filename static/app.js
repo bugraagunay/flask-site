@@ -43,11 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle form submission
     filterForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const country = countrySelect.value;
-        const dataset = datasetSelect.value;
-        const year = yearSelect.value;
 
-        fetch(`/data?country=${country}&dataset=${dataset}&year=${year}`)
+        const selectedCountries = Array.from(countrySelect.selectedOptions).map(option => option.value);
+        const selectedYears = Array.from(yearSelect.selectedOptions).map(option => option.value);
+        const selectedDataset = datasetSelect.value;
+
+        const params = new URLSearchParams();
+        selectedCountries.forEach(country => params.append('country', country));
+        selectedYears.forEach(year => params.append('year', year));
+        params.append('dataset', selectedDataset);
+
+        fetch(`/data?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
                 tableBody.innerHTML = '';
