@@ -76,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dataChart.destroy();
         }
 
-        // 1. Group data by country
         const groupedData = tableData.reduce((acc, row) => {
             if (!acc[row.Country]) {
                 acc[row.Country] = {};
@@ -85,10 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return acc;
         }, {});
 
-        // 2. Sort years descending for the X-axis
-        const sortedYears = [...years].sort((a, b) => b - a);
+        // Sort years in ascending order for the X-axis
+        const sortedYears = [...years].sort((a, b) => a - b);
 
-        // 3. Create a dataset for each country
         const datasets = Object.keys(groupedData).map(country => {
             const dataPoints = sortedYears.map(year => groupedData[country][year] || null);
             const randomColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
@@ -96,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 label: country,
                 data: dataPoints,
                 borderColor: randomColor,
-                backgroundColor: randomColor, // for points
+                backgroundColor: randomColor,
                 fill: false,
                 tension: 0.1,
                 pointRadius: 5,
@@ -104,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
 
-        // 4. Create the chart
         dataChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -141,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         });
     };
-    
+
     const clearChart = () => {
         if (dataChart) {
             dataChart.destroy();
@@ -164,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasetSelect.appendChild(option);
             });
 
-            data.years.sort((a, b) => b - a).forEach(year => {
+            // Sort years in ascending order for the filter checkboxes
+            data.years.sort((a, b) => a - b).forEach(year => {
                 const item = document.createElement('div');
                 item.className = 'form-check';
                 item.innerHTML = `<input class="form-check-input" type="checkbox" value="${year}" id="year-${year}">
