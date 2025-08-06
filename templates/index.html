@@ -41,9 +41,11 @@
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
+            <canvas id="dataChart" style="max-height:400px;"></canvas>
         </div>
         <div id="error-container" class="alert alert-danger mt-3" style="display: none;"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

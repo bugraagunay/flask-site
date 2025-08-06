@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterForm = document.getElementById('filter-form');
     const tableBody = document.getElementById('table-body');
     const errorContainer = document.getElementById('error-container');
+    const chartCanvas = document.getElementById('dataChart');
 
     // State variables
     let allCountries = [];
@@ -21,12 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
     const toTRLower = s => (s ?? '').toLocaleLowerCase('tr');
+    const localeSort = (a, b) => a.localeCompare(b, 'tr');
 
     // --- Country List Rendering and Handling ---
 
     const renderCountryBoxes = (countriesToRender) => {
         countryBoxesContainer.innerHTML = ''; // Clear existing list
-        countriesToRender.forEach(country => {
+
+        const selected = countriesToRender.filter(c => selectedCountries.has(c)).sort(localeSort);
+        const unselected = countriesToRender.filter(c => !selectedCountries.has(c)).sort(localeSort);
+        const sortedList = [...selected, ...unselected];
+
+        sortedList.forEach(country => {
             const isChecked = selectedCountries.has(country);
             const item = document.createElement('div');
             item.className = 'form-check';
@@ -38,7 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Use event delegation for checkbox changes
+    const handleSearch = () => {
+        const searchTerm = toTRLower(countrySearchInput.value);
+        const filtered = searchTerm
+            ? allCountries.filter(country => toTRLower(country).startsWith(searchTerm))
+            : allCountries;
+        renderCountryBoxes(filtered);
+    };
+
     countryBoxesContainer.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
             const country = e.target.value;
@@ -47,33 +61,71 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 selectedCountries.delete(country);
             }
+            handleSearch();
         }
     });
 
-    // Handle search input
-    const handleSearch = () => {
-        const searchTerm = toTRLower(countrySearchInput.value);
-        if (!searchTerm) {
-            renderCountryBoxes(allCountries);
-            return;
-        }
-        const filtered = allCountries.filter(country => toTRLower(country).startsWith(searchTerm));
-        renderCountryBoxes(filtered);
-    };
-
     countrySearchInput.addEventListener('input', debounce(handleSearch, 200));
 
+    // --- Chart Rendering ---
+
+    const renderChart = (tableData, years) => {
+        const ctx = chartCanvas.getContext('2d');
+        if (window.dataChart) {
+            window.dataChart.destroy();
+        }
+
+        const datasets = [];
+        const groupedData = tableData.reduce((acc, row) => {
+            if (!acc[row.Country]) {
+                acc[row.Country] = {};
+            }
+            acc[row.Country][row.Year] = row.Value;
+            return acc;
+        }, {});
+
+        const sortedYears = [...years].sort((a, b) => b - a); // Descending
+
+        for (const country in groupedData) {
+            const dataPoints = sortedYears.map(year => groupedData[country][year] || null);
+            const randomColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            datasets.push({
+                label: country,
+                data: dataPoints,
+                borderColor: randomColor,
+                fill: false,
+                tension: 0.1,
+                pointRadius: 5,
+            });
+        }
+
+        window.dataChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sortedYears,
+                datasets: datasets,
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { reverse: false }, // Years are already sorted descending
+                    y: { beginAtZero: true },
+                },
+                plugins: {
+                    tooltip: { enabled: true },
+                },
+            },
+        });
+    };
 
     // --- Initial Data Fetch ---
 
     fetch('/filters')
         .then(response => response.json())
         .then(data => {
-            // Store and render countries
-            allCountries = data.countries.sort((a, b) => a.localeCompare(b, 'tr')); // Sort once
+            allCountries = data.countries.sort(localeSort);
             renderCountryBoxes(allCountries);
 
-            // Populate dataset dropdown
             data.datasets.forEach(dataset => {
                 const option = document.createElement('option');
                 option.value = dataset;
@@ -81,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasetSelect.appendChild(option);
             });
 
-            // Populate year checkbox list
             data.years.forEach(year => {
                 const item = document.createElement('div');
                 item.className = 'form-check';
@@ -96,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             errorContainer.style.display = 'block';
         });
 
-
     // --- Form Submission ---
 
     filterForm.addEventListener('submit', (e) => {
@@ -110,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorContainer.textContent = 'Please select at least one country and one year.';
             errorContainer.style.display = 'block';
             tableBody.innerHTML = '';
+            if (window.dataChart) window.dataChart.destroy();
             return;
         }
 
@@ -125,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.length === 0) {
                     errorContainer.textContent = 'No data found for the selected filters.';
                     errorContainer.style.display = 'block';
+                    if (window.dataChart) window.dataChart.destroy();
                 } else {
                     errorContainer.style.display = 'none';
                     data.forEach(item => {
@@ -139,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                         tableBody.appendChild(row);
                     });
+                    renderChart(data, selectedYears);
                 }
             })
             .catch(error => {
