@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('table-body');
     const errorContainer = document.getElementById('error-container');
     const chartCanvas = document.getElementById('dataChart');
+    let dataChart; // To hold the chart instance
 
     // State variables
     let allCountries = [];
@@ -71,11 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderChart = (tableData, years) => {
         const ctx = chartCanvas.getContext('2d');
-        if (window.dataChart) {
-            window.dataChart.destroy();
+        if (dataChart) {
+            dataChart.destroy();
         }
 
-        const datasets = [];
+        // 1. Group data by country
         const groupedData = tableData.reduce((acc, row) => {
             if (!acc[row.Country]) {
                 acc[row.Country] = {};
@@ -84,22 +85,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return acc;
         }, {});
 
-        const sortedYears = [...years].sort((a, b) => b - a); // Descending
+        // 2. Sort years descending for the X-axis
+        const sortedYears = [...years].sort((a, b) => b - a);
 
-        for (const country in groupedData) {
+        // 3. Create a dataset for each country
+        const datasets = Object.keys(groupedData).map(country => {
             const dataPoints = sortedYears.map(year => groupedData[country][year] || null);
-            const randomColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            datasets.push({
+            const randomColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+            return {
                 label: country,
                 data: dataPoints,
                 borderColor: randomColor,
+                backgroundColor: randomColor, // for points
                 fill: false,
                 tension: 0.1,
                 pointRadius: 5,
-            });
-        }
+                pointHoverRadius: 7,
+            };
+        });
 
-        window.dataChart = new Chart(ctx, {
+        // 4. Create the chart
+        dataChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: sortedYears,
@@ -107,15 +113,40 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
-                    x: { reverse: false }, // Years are already sorted descending
-                    y: { beginAtZero: true },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    },
                 },
                 plugins: {
-                    tooltip: { enabled: true },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    legend: {
+                        position: 'top',
+                    },
                 },
             },
         });
+    };
+    
+    const clearChart = () => {
+        if (dataChart) {
+            dataChart.destroy();
+            dataChart = null;
+        }
     };
 
     // --- Initial Data Fetch ---
@@ -133,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasetSelect.appendChild(option);
             });
 
-            data.years.forEach(year => {
+            data.years.sort((a, b) => b - a).forEach(year => {
                 const item = document.createElement('div');
                 item.className = 'form-check';
                 item.innerHTML = `<input class="form-check-input" type="checkbox" value="${year}" id="year-${year}">
@@ -156,14 +187,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedYears = Array.from(yearList.querySelectorAll('input:checked')).map(input => input.value);
         const selectedDataset = datasetSelect.value;
 
+        tableBody.innerHTML = '';
+        clearChart();
+
         if (countries.length === 0 || selectedYears.length === 0) {
             errorContainer.textContent = 'Please select at least one country and one year.';
             errorContainer.style.display = 'block';
-            tableBody.innerHTML = '';
-            if (window.dataChart) window.dataChart.destroy();
             return;
         }
 
+        errorContainer.style.display = 'none';
         const params = new URLSearchParams();
         countries.forEach(country => params.append('country', country));
         selectedYears.forEach(year => params.append('year', year));
@@ -172,13 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/data?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
-                tableBody.innerHTML = '';
                 if (data.length === 0) {
                     errorContainer.textContent = 'No data found for the selected filters.';
                     errorContainer.style.display = 'block';
-                    if (window.dataChart) window.dataChart.destroy();
                 } else {
-                    errorContainer.style.display = 'none';
                     data.forEach(item => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
