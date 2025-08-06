@@ -11,8 +11,9 @@
         <h1>World Bank Data Visualizer</h1>
         <form id="filter-form" class="row g-3">
             <div class="col-md-4">
-                <label for="country-list" class="form-label">Country</label>
-                <div id="country-list" class="form-control" style="height: 260px; overflow-y: auto;"></div>
+                <label class="form-label">Country</label>
+                <input id="country-search" type="text" class="form-control mb-2" placeholder="Search countries... (prefix match)">
+                <div id="country-boxes" class="border rounded p-2" style="max-height:260px; overflow:auto;"></div>
             </div>
             <div class="col-md-4">
                 <label for="dataset" class="form-label">Data Set</label>
