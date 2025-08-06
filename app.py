@@ -38,50 +38,30 @@ def get_dataset_map():
 def serve_index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/countries')
-def get_countries():
+@app.route('/filters')
+def get_filters():
     conn = get_db_connection()
     if conn:
         try:
             countries = pd.read_sql_query("SELECT DISTINCT Country FROM income_data ORDER BY Country", conn)['Country'].tolist()
-            conn.close()
-            return jsonify(countries)
-        except pd.io.sql.DatabaseError as e:
-            logging.error(f"Error fetching countries from database: {e}")
-            return jsonify([])
-    return jsonify([])
-
-@app.route('/datasets')
-def get_datasets():
-    conn = get_db_connection()
-    if conn:
-        try:
+            
             table_info = pd.read_sql_query("PRAGMA table_info(income_data)", conn)
             excluded_columns = ['Country', 'economic_group', 'EM and Developed Markets', 'Code', 'code-2', 'Year']
             datasets = table_info[~table_info['name'].isin(excluded_columns)]['name'].tolist()
+            
+            years = pd.read_sql_query("SELECT DISTINCT Year FROM income_data ORDER BY Year", conn)['Year'].tolist()
+            
             conn.close()
-            return jsonify(datasets)
+            
+            return jsonify({
+                'countries': countries,
+                'datasets': datasets,
+                'years': years
+            })
         except pd.io.sql.DatabaseError as e:
-            logging.error(f"Error fetching datasets from database: {e}")
-            return jsonify([])
-    return jsonify([])
-
-@app.route('/years')
-def get_years():
-    country = request.args.get('country')
-    conn = get_db_connection()
-    if conn:
-        try:
-            if country:
-                years = pd.read_sql_query(f"SELECT DISTINCT Year FROM income_data WHERE Country = ? ORDER BY Year", conn, params=(country,))['Year'].tolist()
-            else:
-                years = pd.read_sql_query("SELECT DISTINCT Year FROM income_data ORDER BY Year", conn)['Year'].tolist()
-            conn.close()
-            return jsonify(years)
-        except pd.io.sql.DatabaseError as e:
-            logging.error(f"Error fetching years from database: {e}")
-            return jsonify([])
-    return jsonify([])
+            logging.error(f"Error fetching filters from database: {e}")
+            return jsonify({'countries': [], 'datasets': [], 'years': []})
+    return jsonify({'countries': [], 'datasets': [], 'years': []})
 
 @app.route('/data')
 def get_data():

@@ -8,60 +8,73 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('table-body');
     const errorContainer = document.getElementById('error-container');
 
-    // Helper function to fetch data and populate a select element
-    async function fetchDataAndPopulateDropdown(endpoint, selectElement, param = null) {
+    async function populateFilters() {
         try {
-            let url = `${window.location.origin}${endpoint}`;
-            if (param) {
-                url += `?country=${param}`;
-            }
-            console.log(`Fetching from: ${url}`); // Log the URL being fetched
+            let url = `${window.location.origin}/filters`;
+            console.log(`Fetching from: ${url}`);
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
 
-            selectElement.innerHTML = ''; // Clear existing options
-            if (data.length === 0) {
-                console.warn(`Received empty list from ${endpoint} API.`);
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = `No data available`;
-                selectElement.appendChild(option);
-            } else {
-                data.forEach(item => {
+            // Populate Countries
+            countrySelect.innerHTML = '';
+            if (data.countries.length > 0) {
+                data.countries.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item;
                     option.textContent = item;
-                    selectElement.appendChild(option);
+                    countrySelect.appendChild(option);
                 });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No countries available';
+                countrySelect.appendChild(option);
             }
-            return data; // Return data for further processing if needed
+
+            // Populate Datasets
+            datasetSelect.innerHTML = '';
+            if (data.datasets.length > 0) {
+                data.datasets.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    datasetSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No datasets available';
+                datasetSelect.appendChild(option);
+            }
+
+            // Populate Years
+            yearSelect.innerHTML = '';
+            if (data.years.length > 0) {
+                data.years.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    yearSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No years available';
+                yearSelect.appendChild(option);
+            }
+
         } catch (error) {
-            console.error(`Error fetching data from ${endpoint}:`, error);
-            errorContainer.textContent = `Failed to load data from ${endpoint}. Please check console for details.`;
+            console.error('Error fetching filters:', error);
+            errorContainer.textContent = 'Failed to load filters. Please check console for details.';
             errorContainer.style.display = 'block';
-            return []; // Return empty array on error
         }
     }
 
-    // Initial fetch for countries and datasets on page load
-    fetchDataAndPopulateDropdown('/countries', countrySelect).then(countries => {
-        // After countries are loaded, trigger change event to populate years for the first country
-        if (countries.length > 0) {
-            countrySelect.dispatchEvent(new Event('change'));
-        }
-    });
-    fetchDataAndPopulateDropdown('/datasets', datasetSelect);
+    populateFilters();
 
-    // Event listener for country selection change to update years
-    countrySelect.addEventListener('change', () => {
-        const selectedCountry = countrySelect.value;
-        fetchDataAndPopulateDropdown('/years', yearSelect, selectedCountry);
-    });
-
-    // Form submission handler
     filterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const country = countrySelect.value;
